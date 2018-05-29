@@ -8,9 +8,10 @@ let package = Package(
         .library(name: "VaporMonitoring", targets: ["VaporMonitoring"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "0.9.0")
+        .package(url: "https://github.com/MrLotU/vapor.git", .branch("master")),
+        .package(url: "https://github.com/MrLotU/SwiftMetrics.git", .branch("master"))
     ],
     targets: [
-      .target(name: "VaporMonitoring", dependencies: ["Vapor"])
+      .target(name: "VaporMonitoring", dependencies: ["Vapor", "SwiftMetrics"])
     ]
 )
