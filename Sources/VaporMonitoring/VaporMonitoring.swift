@@ -17,7 +17,15 @@ public struct LogData: SMData {
     public let method: HTTPMethod
 }
 
-public final class MonitoredResponder: Responder {
+public final class MonitoredResponder: Responder, ServiceType {
+    public static var serviceSupports: [Any.Type] { return [Responder.self] }
+    
+    public static func makeService(for worker: Container) throws -> MonitoredResponder {
+        let baseResponder = try worker.make(Responder.self)
+        print(type(of: baseResponder))
+        return MonitoredResponder.monitoring(responder: baseResponder)
+    }
+    
     public func respond(to req: Request) throws -> EventLoopFuture<Response> {
         // Logging
         print("RESPONDING TO \(req)")
