@@ -21,7 +21,17 @@ public final class MonitoredResponder: Responder {
     public func respond(to req: Request) throws -> EventLoopFuture<Response> {
         // Logging
         print("RESPONDING TO \(req)")
-        return try req.make(Responder.self).respond(to: req)
+        return try self.responder.respond(to: req)
+    }
+    
+    private let responder: Responder
+    
+    init(responder: Responder) {
+        self.responder = responder
+    }
+    
+    public static func monitoring(responder: Responder) -> MonitoredResponder {
+        return MonitoredResponder(responder: responder)
     }
 }
 
@@ -48,12 +58,12 @@ public final class MonitoredRouter: Router {
 
     public init(swiftMetrics: SwiftMetrics) {
         self.metrics = swiftMetrics
-        self.router = EngineRouter.monitored()
+        self.router = EngineRouter.default()
     }
 }
 
-extension EngineRouter {
-    public static func monitored() -> EngineRouter {
-        return EngineRouter(type: MonitoredResponder.self as! Responder.Protocol)
-    }
-}
+//extension EngineRouter {
+//    public static func monitored() -> EngineRouter {
+//        return EngineRouter()
+//    }
+//}
