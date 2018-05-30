@@ -51,19 +51,18 @@ public final class MonitoredRouter: Router {
     }
 
     /// the internal router
-    private let router: EngineRouter
+    private let router: Router
 
     /// The Swift Metrics instance
     let metrics: SwiftMetrics
 
-    public init(swiftMetrics: SwiftMetrics) {
+    public init(swiftMetrics: SwiftMetrics, router: Router = EngineRouter.default()) throws {
+        guard type(of: router) != type(of: self) else {
+            throw VaporError(identifier: "routerType", reason: "Can't provide a `MonitoredRouter` to `MonitoredRouter`", suggestedFixes: ["Provide a different type of `Router` to `MonitoredRouter`"])
+        }
         self.metrics = swiftMetrics
-        self.router = EngineRouter.default()
+        self.router = router
     }
 }
 
-//extension EngineRouter {
-//    public static func monitored() -> EngineRouter {
-//        return EngineRouter()
-//    }
-//}
+extension SwiftMetrics: Service { }
