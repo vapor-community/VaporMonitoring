@@ -1,0 +1,274 @@
+<!--
+******************************************************************************
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ ******************************************************************************
+-->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="css/style2.css" title="Light background">
+<link rel="alternate stylesheet" type="text/css" href="css/style.css" title="Dark background">
+
+<head>
+    <title>Graphmetrics Test Dashboard</title>
+</head>
+
+<body>
+    <!-- load the d3.js library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="d3/d3.v3.min.js"></script>
+    <script src="jquery/jquery-3.1.1.min.js"></script>
+    <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+
+    <script>
+    function toggleMenu() {
+      if (document.getElementById("sideMenu").style.width != "250px") {
+        document.getElementById("sideMenu").style.width = "250px";
+      } else {
+        document.getElementById("sideMenu").style.width = "0px";
+      }
+    }
+
+    function toggleProfiling() {
+      if (profiling_enabled) {
+        socket.emit('disableprofiling');
+      } else {
+        socket.emit('enableprofiling');
+      }
+    }
+
+    </script>
+
+    <div class="headerDiv">
+      <span class="sidenavButton" onclick="toggleMenu()">&#9776;</span>
+      <span class="leftHeader"></span>
+      <span class="rightHeader"></span>
+    </div>
+
+    <div id="sideMenu" class="sidenav">
+      <a class="sidenavEntry" onclick="socket.emit('heapdump')">Trigger Heap Dump</a>
+      <a class="sidenavEntry" onclick="socket.emit('nodereport')">Trigger Node Report</a>
+      <a class="sidenavEntry" id="toggle-profiling" onclick="toggleProfiling()"></a>
+      <a class="sidenavEntry" id="clear-profiling" onclick="clearProfilingData()">Clear Profiling Data</a>
+    </div>
+
+    <div id="tabs" class="container">
+
+        <ul class="nav nav-tabs">
+            <li class="active">
+                <a  href="#main" id="main-tab" data-toggle="tab">Main</a>
+            </li>
+            <li>
+                <a href="#profiling" id="profiing-tab" data-toggle="tab">Profiling</a>
+            </li>
+        </ul>
+
+        <div class="tab-content ">
+            <div class="tab-pane active" id="main">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6" hideable id="httpDiv1"></div>
+                        <div class="col-md-3" hideable id="httpDiv2"></div>
+                        <div class="col-md-3" hideable id="httpDiv3"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-2" hideable id="cpuDiv1"></div>
+                        <div class="col-md-2" hideable id="memDiv1"></div>
+                        <div class="col-md-2" hideable id="gcDiv"></div>
+                        <div class="col-md-3" hideable id="eventLoopDiv"></div>
+                        <div class="col-md-3" hideable id="envDiv"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6" hideable id="probeEventsDiv"></div>
+                        <div class="col-md-6" hideable id="httpOBDiv"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane" id="profiling">
+                <div id="flameDiv"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="heapdumpModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" font-color=black>Heap Snapshot</h4>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script type="text/javascript" src="js/i18n.js"></script>
+<script>
+    // Global variables
+    var object = {};
+    var monitoringStartTime = new Date();
+    var maxTimeWindow = 900000; // 15 minutes
+
+    // Initialise graph and canvas dimensions
+    var margin = {
+        top: 50,
+        right: 20,
+        bottom: 50,
+        shortBottom: 30,
+        left: 60
+    },
+    canvasWidth = $("#cpuDiv1").width() - 8, // -8 for margins and borders
+    httpCanvasWidth = $("#httpDiv1").width() - 8,
+    graphWidth = canvasWidth - margin.left - margin.right,
+    httpGraphWidth = httpCanvasWidth - margin.left - margin.right,
+    canvasHeight = 250,
+    tallerGraphHeight = canvasHeight - margin.top - margin.shortBottom,
+    graphHeight = canvasHeight - margin.top - margin.bottom;
+
+        jQuery.loadScript = function (url) {
+          jQuery.ajax({
+            url: url,
+            dataType: 'script',
+            async: true
+          });
+        }
+
+        //Graphs are now loaded here rather than at the end of this raw script
+        //Need to be part of callback so 'object' (locale strings) visible
+        populateKeyArray(function(object) {
+          console.log("popKey callback");
+          jQuery.loadScript('js/envTable.js');
+          jQuery.loadScript('js/cpuChart.js');
+
+          jQuery.loadScript('js/httpRequestsChart.js');
+          jQuery.loadScript('js/httpThroughPutChart.js');
+          jQuery.loadScript('js/httpTop5.js');
+          jQuery.loadScript('js/httpOutboundRequestsChart.js');
+          jQuery.loadScript('js/httpSummary.js');
+
+          jQuery.loadScript('js/memChart.js');
+          jQuery.loadScript('js/gcChart.js');
+          jQuery.loadScript('js/eventLoopChart.js');
+          jQuery.loadScript('js/probeEventsChart.js');
+
+          jQuery.loadScript('js/flamegraph.js');
+          jQuery.loadScript('profiling.js');
+        });
+
+    var myurl = location.host;
+    var socket = io.connect(myurl);
+    socket.emit('connected');
+    socket.on('cpu', function(data) {
+        updateCPUData(data);
+    });
+    socket.on('environment', function(data) {
+        populateEnvTable(data);
+    });
+    socket.on('eventloop', function(data) {
+        updateEventLoopData(data);
+    });
+    socket.on('gc', function(data) {
+        updateGCData(data);
+    });
+    socket.on('http-outbound', function(data) {
+        updateHttpOBData(data);
+    });
+    socket.on('http', function(data) {
+        updateHttpData(data);
+    });
+    socket.on('http-urls', function(data) {
+        updateURLData(data);
+    });
+    socket.on('memory', function(data) {
+        updateMemData(data);
+    });
+    socket.on('probe-events', function(data) {
+        updateProbesData(data);
+    });
+    socket.on('title', function(data) {
+        updateHeader(data);
+    });
+    function getTimeFormat() {
+        var currentTime = new Date()
+        if(currentTime.getMinutes() - monitoringStartTime.getMinutes() >= 3
+            || currentTime.getHours() > monitoringStartTime.getHours()) {
+            return d3.time.format("%H:%M");
+        } else {
+            return d3.time.format("%H:%M:%S");
+        }
+    }
+</script>
+<script type="text/javascript" src="js/header.js"></script>
+
+<!--
+<script type="text/javascript" src="js/nodeReport.js"></script>
+<script type="text/javascript" src="js/envTable.js"></script>
+<script type="text/javascript" src="js/cpuChart.js"></script>
+
+<script type="text/javascript" src="js/httpRequestsChart.js"></script>
+<script type="text/javascript" src="js/httpThroughPutChart.js"></script>
+<script type="text/javascript" src="js/httpTop5.js"></script>
+<script type="text/javascript" src="js/httpOutboundRequestsChart.js"></script>
+
+<script type="text/javascript" src="js/memChart.js"></script>
+<script type="text/javascript" src="js/gcChart.js"></script>
+<script type="text/javascript" src="js/eventLoopChart.js"></script>
+<script type="text/javascript" src="js/probeEventsChart.js"></script>
+<script type="text/javascript" src="js/flamegraph.js"></script>
+<script type="text/javascript" src="profiling.js"></script>
+-->
+<script>
+    let selected_tab = "main-tab"
+
+    window.addEventListener('resize', resize);
+
+    // Also re-size when we change tabs in case we re-sized
+    // while the new tab wasn't visible.
+    $('.nav-tabs a').on('shown.bs.tab', function(event){
+      selected_tab = event.target.id;
+      resize();
+    });
+
+    function resize() {
+      if( selected_tab == "main-tab") {
+        canvasWidth = $("#cpuDiv1").width() - 8,
+        httpCanvasWidth = $("#httpDiv1").width() - 8,
+        graphWidth = canvasWidth - margin.left - margin.right,
+        httpGraphWidth = httpCanvasWidth - margin.left - margin.right;
+        resizeCPUChart();
+        resizeHttpChart();
+        resizeHttpOBChart();
+        resizeGCChart();
+        resizeEventLoopChart();
+        resizeHttpThroughputChart();
+        resizeHttpTop5Chart();
+        resizeMemChart();
+        resizeEnvTable();
+        resizeProbesChart();
+      } else {
+        refreshFlameGraph();
+      }
+    }
+</script>
+
+</body>
+
+</html>
