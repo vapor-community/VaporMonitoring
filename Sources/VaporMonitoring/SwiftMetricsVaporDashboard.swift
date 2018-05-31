@@ -23,16 +23,26 @@ struct HTTPAggregateData: SMData {
     public var total: Int = 0
 }
 
-public class VaporMetricsDash {
+public class VaporMetricsDash: ServiceType {
+    public static func makeService(for worker: Container) throws -> Self {
+        let router = try worker.make(MonitoredRouter.self)
+        let metrics = try worker.make(SwiftMetrics.self)
+        
+        return try .init(metrics: metrics, router: router, worker: worker)
+    }
+    
     var monitor: SwiftMonitor
     var metrics: SwiftMetrics
     var service: VaporMetricsService
     
-    public init(metrics: SwiftMetrics, router: Router) throws {
+    public init(metrics: SwiftMetrics, router: Router, worker: Worker) throws {
         self.metrics = metrics
         self.monitor = metrics.monitor()
         self.service = VaporMetricsService(monitor: self.monitor)
         router.get("metrics", use: render)
+//        _ = try HTTPClient.webSocket(scheme: .ws, hostname: "0.0.0.0", path: "metrics", on: worker).map { (ws) in
+//            self.service.connect(ws)
+//        }
     }
     
     func render(_ req: Request) throws -> Future<View> {
@@ -105,7 +115,7 @@ public class VaporMetricsService {
         }
     }
     
-    public func connect(conn: WebSocket) {
+    public func connect(_ conn: WebSocket) {
         conns[conn.id] = conn
         getenvRequest()
         sendTitle()
