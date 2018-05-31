@@ -229,6 +229,6 @@ public class VaporMetricsPrometheus: ServiceType {
         }
 
         
-        return output.joined(separator: "\n")
+        return output.joined(separator: "")
     }
 }
