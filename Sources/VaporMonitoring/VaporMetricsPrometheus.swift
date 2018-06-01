@@ -161,17 +161,13 @@ func httpEvent(http: RequestData) {
     
 }
 
-public class VaporMetricsPrometheus: ServiceType {
+public class VaporMetricsPrometheus: Vapor.Service {
     var monitor: SwiftMonitor
     var metrics: SwiftMetrics
     
     let p_quantiles: [Double] = [0.5,0.9,0.99]
     
-    public convenience init(metrics: SwiftMetrics, router: Router) throws {
-        try self.init(metrics: metrics, router: router, endpoint: "prometheus-metrics")
-    }
-    
-    public init(metrics: SwiftMetrics, router: Router, endpoint: String) throws {
+    public init(metrics: SwiftMetrics, router: Router, route: String) throws {
         self.metrics = metrics
         self.monitor = metrics.monitor()
         
@@ -179,13 +175,7 @@ public class VaporMetricsPrometheus: ServiceType {
         monitor.on(memEvent)
         monitor.on(httpEvent)
         
-        router.get(endpoint, use: self.getPrometheusData)
-    }
-    
-    public static func makeService(for worker: Container) throws -> Self {
-        let metrics = try worker.make(SwiftMetrics.self)
-        let router = try worker.make(Router.self)
-        return try .init(metrics: metrics, router: router)
+        router.get(route == "" ? "prometheus-metrics" : route, use: self.getPrometheusData)
     }
     
     func getPrometheusData(_ req: Request) throws -> String {

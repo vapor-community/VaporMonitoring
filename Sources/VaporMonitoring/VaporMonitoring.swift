@@ -10,8 +10,19 @@ import SwiftMetrics
 import Vapor
 import Leaf
 
+public struct MonitoringConfig {
+    var dashboard: Bool
+    var prometheus: Bool
+    var dashboardRoute: String
+    var prometheusRoute: String
+    
+    public static func `default`() -> MonitoringConfig {
+        return .init(dashboard: true, prometheus: true, dashboardRoute: "", prometheusRoute: "")
+    }
+}
+
 public final class VaporMonitoring {
-    public static func setupMonitoring(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws -> MonitoredRouter {
+    public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ monitorConfig: MonitoringConfig = .default()) throws -> MonitoredRouter {
         
         services.register(MonitoredResponder.self)
         config.prefer(MonitoredResponder.self, for: Responder.self)
@@ -29,11 +40,15 @@ public final class VaporMonitoring {
         middlewareConfig.use(FileMiddleware.self)
         services.register(middlewareConfig)
         
-        services.register(VaporMetricsDash.self)
+        if monitorConfig.dashboard {
+            let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute)
+            services.register(dashboard)
+        }
         
-        let prometheus = try VaporMetricsPrometheus(metrics: metrics, router: router)
-        services.register(prometheus)
-        
+        if monitorConfig.prometheus {
+            let prometheus = try VaporMetricsPrometheus(metrics: metrics, router: router, route: monitorConfig.prometheusRoute)
+            services.register(prometheus)
+        }
         
         return router
     }

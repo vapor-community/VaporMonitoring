@@ -23,26 +23,49 @@ struct HTTPAggregateData: SMData {
     public var total: Int = 0
 }
 
-public class VaporMetricsDash: ServiceType {
-    public static func makeService(for worker: Container) throws -> Self {
-        let router = try worker.make(MonitoredRouter.self)
-        let metrics = try worker.make(SwiftMetrics.self)
-        
-        return try .init(metrics: metrics, router: router, worker: worker)
+/// Echoes the request as a response.
+struct EchoResponder: HTTPServerResponder {
+    /// See `HTTPServerResponder`.
+    func respond(to req: HTTPRequest, on worker: Worker) -> Future<HTTPResponse> {
+        // Create an HTTPResponse with the same body as the HTTPRequest
+        let res = HTTPResponse(body: req.body)
+        // We don't need to do any async work here, we can just
+        // use the Worker's event-loop to create a succeeded future.
+        return worker.eventLoop.newSucceededFuture(result: res)
     }
-    
+}
+
+public class VaporMetricsDash: Vapor.Service {    
     var monitor: SwiftMonitor
     var metrics: SwiftMetrics
     var service: VaporMetricsService
     
-    public init(metrics: SwiftMetrics, router: Router, worker: Worker) throws {
+    func log(_ msg: String) {
+        print(msg)
+    }
+    
+    public init(metrics: SwiftMetrics, router: Router, route: String) throws {
         self.metrics = metrics
         self.monitor = metrics.monitor()
         self.service = VaporMetricsService(monitor: self.monitor)
-        router.get("metrics", use: render)
-//        _ = try HTTPClient.webSocket(scheme: .ws, hostname: "0.0.0.0", path: "metrics", on: worker).map { (ws) in
-//            self.service.connect(ws)
-//        }
+        router.get(route == "" ? "metrics" : route, use: render)
+        let ws = HTTPServer.webSocketUpgrader(shouldUpgrade: { req -> HTTPHeaders? in
+            guard req.url.lastPathComponent == "metrics" else {
+                return nil
+            }
+            return [:]
+        }) { (ws, req) in
+            self.service.connect(ws)
+        }
+//        server
+//        let server = try worker.m
+//        let server = try HTTPServer.start(hostname: "0.0.0.0", port: 8080, responder: EchoResponder(), upgraders: [ws], on: worker, onError: { (error) in
+//            self.log("WS Exploded! \(error)")
+//        }).wait()
+//        server.onClose.addAwaiter(callback: { (res) in
+//            print(res.error ?? "No error")
+//            print("WS Shut down")
+//        })
     }
     
     func render(_ req: Request) throws -> Future<View> {
