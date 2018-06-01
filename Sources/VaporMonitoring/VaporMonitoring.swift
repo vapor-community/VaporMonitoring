@@ -40,11 +40,15 @@ public final class VaporMonitoring {
         let router = try MonitoredRouter()
         config.prefer(MonitoredRouter.self, for: Router.self)
         
+        let publicDir = try getPublicDir()
+        print("PUBLIC DIR: \(publicDir)")
+        let fileMiddelware = FileMiddleware(publicDirectory: publicDir)
+        
         var middlewareConfig = MiddlewareConfig()
-        middlewareConfig.use(FileMiddleware.self)
+        middlewareConfig.use(fileMiddelware)
         services.register(middlewareConfig)
         
-        if monitorConfig.dashboard {
+        if monitorConfig.dashboard && publicDir != "" {
             let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute)
             services.register(dashboard)
         }
@@ -55,6 +59,51 @@ public final class VaporMonitoring {
         }
         
         return router
+    }
+    
+    static func getPublicDir() throws -> String {
+        var appPath = ""
+        var workingPath = ""
+        let fm = FileManager.default
+        let currentDir = fm.currentDirectoryPath
+        if currentDir.contains(".build") {
+            workingPath = currentDir
+        }
+        if let i = workingPath.range(of: ".build") {
+            appPath = String(workingPath[..<i.lowerBound])
+        } else {
+            print("VaporMonitoring: .build directory not found")
+            print("VaporMonitoring: not creating dashboard")
+        }
+        let checkoutsPath = appPath + ".build/checkouts/"
+        if fm.fileExists(atPath: checkoutsPath) {
+            _ = fm.changeCurrentDirectoryPath(checkoutsPath)
+        } else {
+            print("VaporMonitoring: checkouts directory not found")
+            print("VaporMonitoring: not creating dashboard")
+        }
+        do {
+            let dirContents = try fm.contentsOfDirectory(atPath: fm.currentDirectoryPath)
+            for dir in dirContents {
+                if dir.contains("VaporMonitoring") {
+                    ///that's where we want to be!
+                    _ = fm.changeCurrentDirectoryPath(dir)
+                }
+            }
+        } catch {
+            print("SwiftMetrics: Error obtaining contents of directory: \(fm.currentDirectoryPath), \(error).")
+            throw error
+        }
+        let fileName = NSString(string: #file)
+        let installDirPrefixRange: NSRange
+        let installDir = fileName.range(of: "/Sources/VaporMonitoring/VaporMonitoring.swift", options: .backwards)
+        if  installDir.location != NSNotFound {
+            installDirPrefixRange = NSRange(location: 0, length: installDir.location)
+        } else {
+            installDirPrefixRange = NSRange(location: 0, length: fileName.length)
+        }
+        let folderName = fileName.substring(with: installDirPrefixRange)
+        return folderName + "/Public"
     }
 }
 

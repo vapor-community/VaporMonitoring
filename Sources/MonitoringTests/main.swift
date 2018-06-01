@@ -10,8 +10,6 @@ public func routes(_ router: Router) throws {
     }
 }
 
-var dashboard: VaporMetricsDash? = nil
-
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     /// Register routes to the router
@@ -24,7 +22,6 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 
 /// Called after your application has initialized.
 public func boot(_ app: Application) throws {
-    dashboard = try app.make(VaporMetricsDash.self)
 }
 
 /// Creates an instance of Application. This is called from main.swift in the run target.
