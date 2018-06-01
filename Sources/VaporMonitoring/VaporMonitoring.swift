@@ -40,8 +40,7 @@ public final class VaporMonitoring {
         let router = try MonitoredRouter()
         config.prefer(MonitoredRouter.self, for: Router.self)
         
-        let publicDir = try getPublicDir()
-        print("PUBLIC DIR: \(publicDir)")
+        let publicDir = getPublicDir()
         let fileMiddelware = FileMiddleware(publicDirectory: publicDir)
         
         var middlewareConfig = MiddlewareConfig()
@@ -61,7 +60,11 @@ public final class VaporMonitoring {
         return router
     }
     
-    static func getPublicDir() throws -> String {
+    static var publicDir: String {
+        return getPublicDir()
+    }
+    
+    static func getPublicDir() -> String {
         var appPath = ""
         var workingPath = ""
         let fm = FileManager.default
@@ -71,16 +74,10 @@ public final class VaporMonitoring {
         }
         if let i = workingPath.range(of: ".build") {
             appPath = String(workingPath[..<i.lowerBound])
-        } else {
-            print("VaporMonitoring: .build directory not found")
-            print("VaporMonitoring: not creating dashboard")
         }
         let checkoutsPath = appPath + ".build/checkouts/"
         if fm.fileExists(atPath: checkoutsPath) {
             _ = fm.changeCurrentDirectoryPath(checkoutsPath)
-        } else {
-            print("VaporMonitoring: checkouts directory not found")
-            print("VaporMonitoring: not creating dashboard")
         }
         do {
             let dirContents = try fm.contentsOfDirectory(atPath: fm.currentDirectoryPath)
@@ -92,7 +89,7 @@ public final class VaporMonitoring {
             }
         } catch {
             print("SwiftMetrics: Error obtaining contents of directory: \(fm.currentDirectoryPath), \(error).")
-            throw error
+            return ""
         }
         let fileName = NSString(string: #file)
         let installDirPrefixRange: NSRange

@@ -47,7 +47,7 @@ public class VaporMetricsDash: Vapor.Service {
     
     /// Render the HTML dashboard
     func render(_ req: Request) throws -> Future<View> {
-        return try req.view().render("index")
+        return try req.view().render("\(VaporMonitoring.publicDir)/index.leaf")
     }
 }
 
