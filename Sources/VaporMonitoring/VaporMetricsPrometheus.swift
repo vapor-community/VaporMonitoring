@@ -75,11 +75,9 @@ public class HTTPDurationSummary {
     
     var handlers: [String: HTTPDurationSummaryHandler] = [:]
     
-    public init() {
-    }
+    public init() { }
     
     public func addRequest(url: String, durationMicros: Double) {
-        
         if let urlparser = URL(string: url) {
             let path = urlparser.path
             if let handler = handlers[path] {
@@ -118,8 +116,7 @@ public class HTTPCounter {
     
     var handlers: [String: HTTPCounterHandler] = [:]
     
-    public init() {
-    }
+    public init() { }
     
     public func addRequest(url: String, statusCode: UInt, requestMethod: String) {
         
@@ -161,6 +158,8 @@ func httpEvent(http: RequestData) {
     
 }
 
+/// Class providing Prometheus data
+/// Powered by SwiftMetrics
 public class VaporMetricsPrometheus: Vapor.Service {
     var monitor: SwiftMonitor
     var metrics: SwiftMetrics

@@ -10,6 +10,7 @@ import SwiftMetrics
 import Vapor
 import Leaf
 
+/// Provides configuration for VaporMonitoring
 public struct MonitoringConfig {
     var dashboard: Bool
     var prometheus: Bool
@@ -21,7 +22,10 @@ public struct MonitoringConfig {
     }
 }
 
+/// Vapor Monitoring class
+/// Used to set up monitoring/metrics on your Vapor app
 public final class VaporMonitoring {
+    /// Sets up config & services to monitor your Vapor app
     public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ monitorConfig: MonitoringConfig = .default()) throws -> MonitoredRouter {
         
         services.register(MonitoredResponder.self)
@@ -54,6 +58,7 @@ public final class VaporMonitoring {
     }
 }
 
+/// Data collected from each request
 public struct RequestData: SMData {
     public let timestamp: Int
     public let url: String
@@ -62,57 +67,18 @@ public struct RequestData: SMData {
     public let method: HTTPMethod
 }
 
+/// Log of request
 internal struct RequestLog {
     var request: Request
     var timestamp: Double
 }
 
+/// Log of requests
 internal var requestsLog = [RequestLog]()
 
+/// Timestamp for refference
 internal var timeIntervalSince1970MilliSeconds: Double {
     return Date().timeIntervalSince1970 * 1000
 }
 
 internal var queue = DispatchQueue(label: "requestLogQueue")
-
-extension Request: Equatable {
-    public static func == (lhs: Request, rhs: Request) -> Bool {
-        return lhs.description == rhs.description && lhs.debugDescription == rhs.debugDescription
-    }
-}
-
-extension SwiftMetrics: Service { }
-
-public typealias requestClosure = (RequestData) -> ()
-
-public extension SwiftMonitor.EventEmitter {
-    static var requestObservers: [requestClosure] = []
-    
-    static func publish(data: RequestData) {
-        for process in requestObservers {
-            process(data)
-        }
-    }
-    
-    static func subscribe(callback: @escaping requestClosure) {
-        requestObservers.append(callback)
-    }
-}
-
-public extension SwiftMonitor {
-    public func on(_ callback: @escaping requestClosure) {
-        EventEmitter.subscribe(callback: callback)
-    }
-    
-    func raiseEvent(data: RequestData) {
-        EventEmitter.publish(data: data)
-    }
-}
-
-public extension SwiftMetrics {
-    public func emitData(_ data: RequestData) {
-        if let monitor = swiftMon {
-            monitor.raiseEvent(data: data)
-        }
-    }
-}

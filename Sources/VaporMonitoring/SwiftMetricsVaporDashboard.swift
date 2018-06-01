@@ -23,27 +23,13 @@ struct HTTPAggregateData: SMData {
     public var total: Int = 0
 }
 
-/// Echoes the request as a response.
-struct EchoResponder: HTTPServerResponder {
-    /// See `HTTPServerResponder`.
-    func respond(to req: HTTPRequest, on worker: Worker) -> Future<HTTPResponse> {
-        // Create an HTTPResponse with the same body as the HTTPRequest
-        let res = HTTPResponse(body: req.body)
-        // We don't need to do any async work here, we can just
-        // use the Worker's event-loop to create a succeeded future.
-        return worker.eventLoop.newSucceededFuture(result: res)
-    }
-}
-
-public class VaporMetricsDash: Vapor.Service {    
+/// Vapor Metrics Dashboard
+/// Provides a HTML dashboard showing metrics of current running application
+public class VaporMetricsDash: Vapor.Service {
     var monitor: SwiftMonitor
     var metrics: SwiftMetrics
     var service: VaporMetricsService
-    
-    func log(_ msg: String) {
-        print(msg)
-    }
-    
+
     public init(metrics: SwiftMetrics, router: Router, route: String) throws {
         self.metrics = metrics
         self.monitor = metrics.monitor()
@@ -57,22 +43,16 @@ public class VaporMetricsDash: Vapor.Service {
         }) { (ws, req) in
             self.service.connect(ws)
         }
-//        server
-//        let server = try worker.m
-//        let server = try HTTPServer.start(hostname: "0.0.0.0", port: 8080, responder: EchoResponder(), upgraders: [ws], on: worker, onError: { (error) in
-//            self.log("WS Exploded! \(error)")
-//        }).wait()
-//        server.onClose.addAwaiter(callback: { (res) in
-//            print(res.error ?? "No error")
-//            print("WS Shut down")
-//        })
     }
     
+    /// Render the HTML dashboard
     func render(_ req: Request) throws -> Future<View> {
         return try req.view().render("index")
     }
 }
 
+/// Service gathering all data required for the dashboard
+/// And providing the data to the connected WebSockets
 public class VaporMetricsService {
     private var conns = [UUID: WebSocket]()
     var httpAggregateData: HTTPAggregateData = HTTPAggregateData()
@@ -282,12 +262,6 @@ public class VaporMetricsService {
                 self.sendhttpData()
             }
         }
-    }
-}
-
-extension WebSocket {
-    var id: UUID {
-        return UUID()
     }
 }
 
