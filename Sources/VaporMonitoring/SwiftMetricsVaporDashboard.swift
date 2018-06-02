@@ -34,7 +34,9 @@ public class VaporMetricsDash: Vapor.Service {
         self.metrics = metrics
         self.monitor = metrics.monitor()
         self.service = VaporMetricsService(monitor: self.monitor)
-        router.get(route == "" ? "metrics" : route, use: render)
+        let middleware = FileMiddleware(publicDirectory: VaporMonitoring.publicDir)
+        let fileRouter = router.grouped(middleware)
+        fileRouter.get(route == "" ? "metrics" : route, use: render)
         let ws = HTTPServer.webSocketUpgrader(shouldUpgrade: { req -> HTTPHeaders? in
             guard req.url.lastPathComponent == "metrics" else {
                 return nil
@@ -47,7 +49,9 @@ public class VaporMetricsDash: Vapor.Service {
     
     /// Render the HTML dashboard
     func render(_ req: Request) throws -> Future<View> {
-        return try req.view().render("\(VaporMonitoring.publicDir)/index.leaf")
+        let config = LeafConfig(tags: .default(), viewsDir: VaporMonitoring.publicDir, shouldCache: false)
+        let renderer = LeafRenderer(config: config, using: req)
+        return renderer.render("index", TemplateData.null)
     }
 }
 

@@ -31,9 +31,6 @@ public final class VaporMonitoring {
         services.register(MonitoredResponder.self)
         config.prefer(MonitoredResponder.self, for: Responder.self)
         
-        try services.register(LeafProvider())
-        config.prefer(LeafRenderer.self, for: ViewRenderer.self)
-        
         let metrics = try SwiftMetrics()
         services.register(metrics)
         
