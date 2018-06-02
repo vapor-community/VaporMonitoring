@@ -23,8 +23,8 @@ let router = try VaporMonitoring.setupMonitoring(&config, &services)
 services.register(router, as: Router.self)
 ```
 ***_Note:_*** \
-This currently also sets up a middlewareConfig to use with the dashboard
-For now the only workaround is to disable the dashboard
+This currently also sets up a middlewareConfig to use with the dashboard \
+If you need your own middleware, for now you have to disable the dashboard in the MonitorConfig
 
 ***_Note if using dashboard_*** \
 If you want to use the dashboard, in your `boot.swift` add the following inside your `boot(_:)` function:
