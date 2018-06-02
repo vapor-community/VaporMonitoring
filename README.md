@@ -17,19 +17,28 @@ Vapor Monitoring is easy to use, it requires only a few lines of code.
 
 Vapor Monitoring requires a few things to work correclty, a `MonitoredRouter` and a `MonitoredResponder` are the most important ones.
 
-To set up your monitoring, in your `Configure.swift` file, add the following:
-
+To set up your monitoring, in your `Configure.swift` file, add the following: 
 ```swift
 let router = try VaporMonitoring.setupMonitoring(&config, &services)
 services.register(router, as: Router.self)
 ```
+***_Note:_*** \
+This currently also sets up a middlewareConfig to use with the dashboard
+For now the only workaround is to disable the dashboard
+
+***_Note if using dashboard_*** \
+If you want to use the dashboard, in your `boot.swift` add the following inside your `boot(_:)` function:
+```swift
+_ = try app.make(VaporMetricsDash.self)
+```
+
 What this does is load VaporMonitoring with the default configuration. This includes adding all required services to your apps services & setting some configuration prefferences to use the `MonitoredResponder` and `MonitoredRouter`.
 
-By default, your dashboard will be served at `host:port/metrics` and your prometheus metrics will be served at `host:port/prometheus-metrics`. You can however customize this, as well as turning the dashboard/prometheus dashboard on or off.
+By default, your dashboard will be served at `host:port/metrics` and your prometheus metrics will be served at `host:port/prometheus-metrics`. You can however customize this, as well as turning the dashboard/prometheus dashboard on or off. This also creates a HTTPServer running a WebSocketServer to power the dashboard.
 
 To customize your monitoring, add this to `Configure.swift`
 ```swift
-let monitoringConfg = MonitoringConfig(dashboard: false, prometheus: true, dashboardRoute: "", prometheusRoute: "customRoute")
+let monitoringConfg = MonitoringConfig(dashboard: false, prometheus: true, dashboardRoute: "", prometheusRoute: "customRoute", webSocketPort: 8888)
 let router = try VaporMonitoring.setupMonitoring(&config, &services, monitoringConfg)
 services.register(router, as: Router.self)
 ```

@@ -12,13 +12,20 @@ import Leaf
 
 /// Provides configuration for VaporMonitoring
 public struct MonitoringConfig {
+    /// Wether or not to create the VaporMetricsDashboard
     var dashboard: Bool
+    /// Wether or not to serve Prometheus data
     var prometheus: Bool
+    /// At what route to host the dashboard
     var dashboardRoute: String
+    /// At what route to host the Prometheus data
     var prometheusRoute: String
+    /// Port to create the WebSocket Server on.
+    /// Used by the dashboard, defaults to 8888
+    var webSocketPort: Int
     
     public static func `default`() -> MonitoringConfig {
-        return .init(dashboard: true, prometheus: true, dashboardRoute: "", prometheusRoute: "")
+        return .init(dashboard: true, prometheus: true, dashboardRoute: "", prometheusRoute: "", webSocketPort: 8888)
     }
 }
 
@@ -37,16 +44,17 @@ public final class VaporMonitoring {
         let router = try MonitoredRouter()
         config.prefer(MonitoredRouter.self, for: Router.self)
         
-        let publicDir = getPublicDir()
-        let fileMiddelware = FileMiddleware(publicDirectory: publicDir)
-        
-        var middlewareConfig = MiddlewareConfig()
-        middlewareConfig.use(fileMiddelware)
-        services.register(middlewareConfig)
-        
         if monitorConfig.dashboard && publicDir != "" {
-            let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute)
-            services.register(dashboard)
+            let publicDir = getPublicDir()
+            let fileMiddelware = FileMiddleware(publicDirectory: publicDir)
+            
+            var middlewareConfig = MiddlewareConfig()
+            middlewareConfig.use(fileMiddelware)
+            services.register(middlewareConfig)
+            services.register { (container) -> (VaporMetricsDash) in
+                let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute, port: monitorConfig.webSocketPort, worker: container)
+                return dashboard
+            }
         }
         
         if monitorConfig.prometheus {

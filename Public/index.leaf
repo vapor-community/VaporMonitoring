@@ -119,7 +119,8 @@
 <script type="text/javascript" src="./graphmetrics/js/top5.js"></script>
 <script type="text/javascript" src="./graphmetrics/js/memChart.js"></script>
 <script>
-    let hostname = location.host;
+    let hostname = location.hostname;
+    let port = #(port)
     let pathname = location.pathname
     // User may have requested appmetrics-dash/index.html
     let dashboardRoot = "/" + pathname.split('/')[1];
@@ -127,7 +128,7 @@
     if(location.protocol === "https:") {
       webSocketProtocol = "wss://"
     }
-    var client = new WebSocket(webSocketProtocol + hostname + dashboardRoot,"swiftmetrics-dash")
+    var client = new WebSocket(webSocketProtocol + hostname + ":" + port + dashboardRoot,"swiftmetrics-dash")
     let summary = {cpu:{}, gc:{}, memory:{}};
     let envTable = new TextTable('#envDiv', '#summary', localizedStrings.envTitle);
     let summaryTable = new TextTable('#summaryDiv', '#summary', localizedStrings.summaryTitle);
