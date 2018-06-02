@@ -45,9 +45,7 @@ public class VaporMetricsDash: Vapor.Service {
         self.service = VaporMetricsService(monitor: self.monitor)
         self.port = port
         self.route = route == "" ? "metrics" : route
-        let middleware = FileMiddleware(publicDirectory: VaporMonitoring.publicDir)
-        let fileRouter = router.grouped(middleware)
-        fileRouter.get(self.route, use: render)
+        router.get(self.route, use: render)
         try self.startWS(worker: worker)
     }
     
