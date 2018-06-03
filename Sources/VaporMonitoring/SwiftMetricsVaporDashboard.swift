@@ -51,7 +51,7 @@ public class VaporMetricsDash: Vapor.Service {
     
     func startWS(worker: Worker) throws {
         let ws = HTTPServer.webSocketUpgrader(shouldUpgrade: { req -> HTTPHeaders? in
-            guard req.url.lastPathComponent == self.route else {
+            guard req.url.lastPathComponent == self.route, req.headers.firstValue(name: .secWebSocketProtocol) == "swiftmetrics-dash" else {
                 return nil
             }
             return ["Sec-WebSocket-Protocol": "swiftmetrics-dash"]
