@@ -12,7 +12,7 @@ let package = Package(
         // Using my own fork here to avoid downloading Kitura files that we wont need
         // You can use the original branch too, the only thing that's different
         // Is that it includes Kitura specefic packages/code
-        .package(url: "https://github.com/MrLotU/SwiftMetrics.git", .branch("master")),
+        .package(url: "https://github.com/RuntimeTools/SwiftMetrics.git", .branch("master")),
         .package(url: "https://github.com/vapor/leaf.git", .branch("master"))
     ],
     targets: [
