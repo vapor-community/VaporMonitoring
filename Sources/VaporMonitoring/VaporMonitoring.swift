@@ -24,6 +24,14 @@ public struct MonitoringConfig {
     /// Used by the dashboard, defaults to 8888
     var webSocketPort: Int
     
+    public init(dashboard: Bool, prometheus: Bool, dashboardRoute: String, prometheusRoute: String, webSocketPort: Int) {
+        self.dashboard = dashboard
+        self.prometheus = prometheus
+        self.dashboardRoute = dashboardRoute
+        self.prometheusRoute = prometheusRoute
+        self.webSocketPort = webSocketPort
+    }
+    
     public static func `default`() -> MonitoringConfig {
         return .init(dashboard: true, prometheus: true, dashboardRoute: "", prometheusRoute: "", webSocketPort: 8888)
     }
