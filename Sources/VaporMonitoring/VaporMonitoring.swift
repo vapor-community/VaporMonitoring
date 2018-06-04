@@ -73,7 +73,7 @@ public final class VaporMonitoring {
         return router
     }
     
-    static var publicDir: String {
+    static public var publicDir: String {
         return getPublicDir()
     }
     
