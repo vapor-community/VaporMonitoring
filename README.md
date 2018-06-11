@@ -9,7 +9,7 @@
 ## Installation
 Vapor Monitoring can be installed using SPM
 ```swift
-.package(url: "https://github.com/MrLotU/VaporMonitoring.git", from: "0.0.1")
+.package(url: "https://github.com/vapor-community/VaporMonitoring.git", from: "0.0.1")
 ```
 
 ## Usage
