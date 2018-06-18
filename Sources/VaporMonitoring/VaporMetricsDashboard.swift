@@ -23,58 +23,36 @@ struct HTTPAggregateData: SMData {
     public var total: Int = 0
 }
 
-private struct EchoResponder: HTTPServerResponder {
-    func respond(to req: HTTPRequest, on worker: Worker) -> Future<HTTPResponse> {
-        let res = HTTPResponse(body: req.body)
-        return worker.eventLoop.newSucceededFuture(result: res)
-    }
-}
-
 /// Vapor Metrics Dashboard
 /// Provides a HTML dashboard showing metrics of current running application
 public class VaporMetricsDash: Vapor.Service {
     var monitor: SwiftMonitor
     var metrics: SwiftMetrics
     var service: VaporMetricsService
-    var port: Int
     var route: String
     
-    public init(metrics: SwiftMetrics, router: Router, route: String, port: Int = 8888, worker: Worker) throws {
+    public init(metrics: SwiftMetrics, router: Router, route: String) throws {
         self.metrics = metrics
         self.monitor = metrics.monitor()
         self.service = VaporMetricsService(monitor: self.monitor)
-        self.port = port
         self.route = route == "" ? "metrics" : route
         router.get(self.route, use: render)
-        try self.startWS(worker: worker)
+//        try self.startWS(worker: worker)
     }
     
-    func startWS(worker: Worker) throws {
-        let ws = HTTPServer.webSocketUpgrader(shouldUpgrade: { req -> HTTPHeaders? in
-            guard req.url.lastPathComponent == self.route, req.headers.firstValue(name: .secWebSocketProtocol) == "swiftmetrics-dash" else {
-                return nil
-            }
-            return ["Sec-WebSocket-Protocol": "swiftmetrics-dash"]
-        }) { (ws, req) in
-            self.service.connect(ws)
+    func socketHandler(_ ws: WebSocket, req: Request) throws {
+        guard req.http.headers.firstValue(name: .secWebSocketProtocol) == "swiftmetrics-dash" else { return }
+        self.service.connect(ws)
+        ws.onClose.always {
+            self.service.disconnect(ws)
         }
-        let server = try HTTPServer.start(hostname: "0.0.0.0", port: self.port, responder: EchoResponder(), upgraders: [ws], on: worker, onError: { (error) in
-            print("WS Exploded! \(error)")
-        }).wait()
-        server.onClose.addAwaiter(callback: { (res) in
-            print(res.error ?? "No error")
-            print("WS Shut down")
-        })
-        server.onClose.addAwaiter(callback: { (res) in
-            print("WS Shut down")
-        })
     }
     
     /// Render the HTML dashboard
     func render(_ req: Request) throws -> Future<View> {
         let config = LeafConfig(tags: .default(), viewsDir: VaporMonitoring.publicDir, shouldCache: false)
         let renderer = LeafRenderer(config: config, using: req)
-        return renderer.render("index", ["port": self.port])
+        return renderer.render("index", TemplateData.bool(true))
     }
 }
 
@@ -149,6 +127,10 @@ public class VaporMetricsService {
         conns[conn.id] = conn
         getenvRequest()
         sendTitle()
+    }
+    
+    public func disconnect(_ conn: WebSocket) {
+        conns.removeValue(forKey: conn.id)
     }
     
     public func getenvRequest()  {
