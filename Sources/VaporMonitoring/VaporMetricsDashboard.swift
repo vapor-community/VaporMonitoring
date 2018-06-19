@@ -23,6 +23,33 @@ struct HTTPAggregateData: SMData {
     public var total: Int = 0
 }
 
+class MetricsWebSocketServer: WebSocketServer, Vapor.Service {
+    
+    private let wsServer: NIOWebSocketServer
+    
+    init() {
+        self.wsServer = NIOWebSocketServer.default()
+    }
+
+    func webSocketShouldUpgrade(for request: Request) -> HTTPHeaders? {
+        guard request.http.headers.firstValue(name: .secWebSocketProtocol) == "swiftmetrics-dash" else {
+            return nil
+        }
+        var headers = HTTPHeaders()
+        headers.add(name: .secWebSocketProtocol, value: "swiftmetrics-dash")
+        return headers
+    }
+    
+    func get(_ path: PathComponentsRepresentable..., use handler: @escaping (WebSocket, Request) throws -> ()) {
+        let path = path.convertToPathComponents()
+        self.wsServer.get(at: path, use: handler)
+    }
+    
+    func webSocketOnUpgrade(_ webSocket: WebSocket, for request: Request) {
+        self.wsServer.webSocketOnUpgrade(webSocket, for: request)
+    }
+}
+
 /// Vapor Metrics Dashboard
 /// Provides a HTML dashboard showing metrics of current running application
 public class VaporMetricsDash: Vapor.Service {
@@ -37,11 +64,12 @@ public class VaporMetricsDash: Vapor.Service {
         self.service = VaporMetricsService(monitor: self.monitor)
         self.route = route == "" ? "metrics" : route
         router.get(self.route, use: render)
-//        try self.startWS(worker: worker)
     }
     
     func socketHandler(_ ws: WebSocket, req: Request) throws {
-        guard req.http.headers.firstValue(name: .secWebSocketProtocol) == "swiftmetrics-dash" else { return }
+        guard req.http.headers.firstValue(name: .secWebSocketProtocol) == "swiftmetrics-dash" else {
+            return
+        }
         self.service.connect(ws)
         ws.onClose.always {
             self.service.disconnect(ws)

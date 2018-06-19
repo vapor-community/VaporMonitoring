@@ -57,11 +57,9 @@ public final class VaporMonitoring {
             services.register(middlewareConfig)
             let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute)
             services.register(dashboard)
-            let serverConfig = NIOServerConfig.default(hostname: "0.0.0.0")
-            services.register(serverConfig)
-            let webSocketServer = NIOWebSocketServer.default()
-            webSocketServer.get(dashboard.route, use: dashboard.socketHandler)
-            services.register(webSocketServer, as: WebSocketServer.self)
+            let metricsServer = MetricsWebSocketServer()
+            metricsServer.get(dashboard.route, use: dashboard.socketHandler)
+            services.register(metricsServer, as: WebSocketServer.self)
         }
         
         if monitorConfig.prometheus {
