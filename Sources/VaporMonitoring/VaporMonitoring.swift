@@ -20,20 +20,16 @@ public struct MonitoringConfig {
     var dashboardRoute: String
     /// At what route to host the Prometheus data
     var prometheusRoute: String
-    /// Port to create the WebSocket Server on.
-    /// Used by the dashboard, defaults to 8888
-    var webSocketPort: Int
     
-    public init(dashboard: Bool, prometheus: Bool, dashboardRoute: String, prometheusRoute: String, webSocketPort: Int) {
+    public init(dashboard: Bool, prometheus: Bool, dashboardRoute: String, prometheusRoute: String) {
         self.dashboard = dashboard
         self.prometheus = prometheus
         self.dashboardRoute = dashboardRoute
         self.prometheusRoute = prometheusRoute
-        self.webSocketPort = webSocketPort
     }
     
     public static func `default`() -> MonitoringConfig {
-        return .init(dashboard: true, prometheus: true, dashboardRoute: "", prometheusRoute: "", webSocketPort: 8888)
+        return .init(dashboard: true, prometheus: true, dashboardRoute: "", prometheusRoute: "")
     }
 }
 
@@ -59,10 +55,11 @@ public final class VaporMonitoring {
             var middlewareConfig = MiddlewareConfig()
             middlewareConfig.use(fileMiddelware)
             services.register(middlewareConfig)
-            services.register { (container) -> (VaporMetricsDash) in
-                let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute, port: monitorConfig.webSocketPort, worker: container)
-                return dashboard
-            }
+            let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute)
+            services.register(dashboard)
+            let metricsServer = MetricsWebSocketServer()
+            metricsServer.get(dashboard.route, use: dashboard.socketHandler)
+            services.register(metricsServer, as: WebSocketServer.self)
         }
         
         if monitorConfig.prometheus {
