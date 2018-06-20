@@ -35,10 +35,9 @@ public struct MonitoringConfig {
 
 /// Vapor Monitoring class
 /// Used to set up monitoring/metrics on your Vapor app
-public final class VaporMonitoring {
-    public typealias ReturnType = (router: MonitoredRouter, middleware: MiddlewareConfig)
-    
-    public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ middlewareConfig: inout MiddlewareConfig, _ monitorConfig: MonitoringConfig = .default()) throws -> ReturnType {
+public final class VaporMonitoring {    
+    /// Sets up config & services to monitor your Vapor app
+    public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ middlewareConfig: inout MiddlewareConfig, _ monitorConfig: MonitoringConfig = .default()) throws -> MonitoredRouter {
         services.register(MonitoredResponder.self)
         config.prefer(MonitoredResponder.self, for: Responder.self)
         
@@ -66,15 +65,15 @@ public final class VaporMonitoring {
             services.register(prometheus)
         }
         
-        return (router, middlewareConfig)
+        return router
     }
     
     /// Sets up config & services to monitor your Vapor app
     public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ monitorConfig: MonitoringConfig = .default()) throws -> MonitoredRouter {
         var middlewareConfig = MiddlewareConfig()
-        let routerAndConfig = try self.setupMonitoring(&config, &services, &middlewareConfig, monitorConfig)
+        let router = try self.setupMonitoring(&config, &services, &middlewareConfig, monitorConfig)
         services.register(middlewareConfig)
-        return routerAndConfig.router
+        return router
     }
     
     static public var publicDir: String {

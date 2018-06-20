@@ -21,10 +21,15 @@ To set up your monitoring, in your `Configure.swift` file, add the following:
 ```swift
 let router = try VaporMonitoring.setupMonitoring(&config, &services)
 services.register(router, as: Router.self)
+
+// If you use middleware use the following method:
+let middlewareConfig = MiddlewareConfig()
+let router = try VaporMonitoring.setupMonitoring(&config, &services, &middlewareConfig)
+
+services.register(router, as: Router.self)
+// Add your own middleware here
+services.register(middlewareConfig)
 ```
-***_Note:_*** \
-This currently also sets up a middlewareConfig to use with the dashboard \
-If you need your own middleware, for now you have to disable the dashboard in the MonitorConfig
 
 What this does is load VaporMonitoring with the default configuration. This includes adding all required services to your apps services & setting some configuration prefferences to use the `MonitoredResponder` and `MonitoredRouter`.
 
