@@ -9,7 +9,7 @@
 ## Installation
 Vapor Monitoring can be installed using SPM
 ```swift
-.package(url: "https://github.com/vapor-community/VaporMonitoring.git", from: "0.1.0")
+.package(url: "https://github.com/vapor-community/VaporMonitoring.git", from: "1.0.0")
 ```
 
 ## Usage
@@ -19,10 +19,11 @@ Vapor Monitoring requires a few things to work correclty, a `MonitoredRouter` an
 
 To set up your monitoring, in your `Configure.swift` file, add the following: 
 ```swift
+// If you don't use middleware use this:
 let router = try VaporMonitoring.setupMonitoring(&config, &services)
 services.register(router, as: Router.self)
 
-// If you use middleware use the following method:
+// If you use middleware use the following instead:
 let middlewareConfig = MiddlewareConfig()
 let router = try VaporMonitoring.setupMonitoring(&config, &services, &middlewareConfig)
 
