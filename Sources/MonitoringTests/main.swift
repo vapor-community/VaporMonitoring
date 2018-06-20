@@ -13,11 +13,14 @@ public func routes(_ router: Router) throws {
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     /// Register routes to the router
+    var middlewareConfig = MiddlewareConfig()
+    let routerAndMiddleware = try VaporMonitoring.setupMonitoring(&config, &services, &middlewareConfig)
     
-    let router = try VaporMonitoring.setupMonitoring(&config, &services)
+    // Add your own middleware here
+    services.register(routerAndMiddleware.middleware)
     
-    try routes(router)
-    services.register(router, as: Router.self)
+    try routes(routerAndMiddleware.router)
+    services.register(routerAndMiddleware.router, as: Router.self)
 }
 
 /// Called after your application has initialized.

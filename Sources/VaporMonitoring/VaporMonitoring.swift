@@ -36,9 +36,9 @@ public struct MonitoringConfig {
 /// Vapor Monitoring class
 /// Used to set up monitoring/metrics on your Vapor app
 public final class VaporMonitoring {
-    /// Sets up config & services to monitor your Vapor app
-    public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ monitorConfig: MonitoringConfig = .default()) throws -> MonitoredRouter {
-        
+    public typealias ReturnType = (router: MonitoredRouter, middleware: MiddlewareConfig)
+    
+    public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ middlewareConfig: inout MiddlewareConfig, _ monitorConfig: MonitoringConfig = .default()) throws -> ReturnType {
         services.register(MonitoredResponder.self)
         config.prefer(MonitoredResponder.self, for: Responder.self)
         
@@ -52,9 +52,8 @@ public final class VaporMonitoring {
             let publicDir = getPublicDir()
             let fileMiddelware = FileMiddleware(publicDirectory: publicDir)
             
-            var middlewareConfig = MiddlewareConfig()
             middlewareConfig.use(fileMiddelware)
-            services.register(middlewareConfig)
+            
             let dashboard = try VaporMetricsDash(metrics: metrics, router: router, route: monitorConfig.dashboardRoute)
             services.register(dashboard)
             let metricsServer = MetricsWebSocketServer()
@@ -67,7 +66,15 @@ public final class VaporMonitoring {
             services.register(prometheus)
         }
         
-        return router
+        return (router, middlewareConfig)
+    }
+    
+    /// Sets up config & services to monitor your Vapor app
+    public static func setupMonitoring(_ config: inout Config, _ services: inout Services, _ monitorConfig: MonitoringConfig = .default()) throws -> MonitoredRouter {
+        var middlewareConfig = MiddlewareConfig()
+        let routerAndConfig = try self.setupMonitoring(&config, &services, &middlewareConfig, monitorConfig)
+        services.register(middlewareConfig)
+        return routerAndConfig.router
     }
     
     static public var publicDir: String {
