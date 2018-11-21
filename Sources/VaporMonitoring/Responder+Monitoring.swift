@@ -19,7 +19,7 @@ public final class MonitoredResponder: Responder, ServiceType {
     public static func makeService(for worker: Container) throws -> MonitoredResponder {
         let baseResponder = try worker.make(ApplicationResponder.self)
         let metrics = try worker.make(SwiftMetrics.self)
-        return try MonitoredResponder.monitoring(responder: baseResponder, metrics: metrics)
+        return try .monitoring(responder: baseResponder, metrics: metrics)
     }
     
     /// See `Responder.respond`

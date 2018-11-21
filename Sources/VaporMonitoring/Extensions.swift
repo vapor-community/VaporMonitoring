@@ -11,14 +11,6 @@ import Vapor
 
 // MARK: - Vapor extensions
 
-/// Adds an ID to a websocket
-extension WebSocket {
-    /// Unique identifier for a WebSocket
-    var id: UUID {
-        return UUID()
-    }
-}
-
 extension Request: Equatable {
     public static func == (lhs: Request, rhs: Request) -> Bool {
         return lhs.description == rhs.description && lhs.debugDescription == rhs.debugDescription

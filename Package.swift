@@ -10,10 +10,10 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "3.0.5"),
         .package(url: "https://github.com/RuntimeTools/SwiftMetrics.git", from: "2.3.0"),
-        .package(url: "https://github.com/vapor/leaf.git", from: "3.0.0-rc")
+        .package(url: "https://github.com/MrLotU/SwiftPrometheus.git", from: "0.1.3")
     ],
     targets: [
-      .target(name: "VaporMonitoring", dependencies: ["Vapor", "SwiftMetrics", "Leaf"]),
+      .target(name: "VaporMonitoring", dependencies: ["Vapor", "SwiftMetrics", "SwiftPrometheus"]),
       .target(name: "MonitoringExample", dependencies: ["VaporMonitoring"])
     ]
 )

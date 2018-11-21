@@ -1,7 +1,6 @@
 import Vapor
 import VaporMonitoring
 import SwiftMetrics
-import Leaf
 
 public func routes(_ router: Router) throws {
     // Basic "Hello, world!" example
@@ -13,11 +12,11 @@ public func routes(_ router: Router) throws {
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     /// Register routes to the router
-    var middlewareConfig = MiddlewareConfig()
-    let router = try VaporMonitoring.setupMonitoring(&config, &services, &middlewareConfig)
-    
-    // Add your own middleware here
-    services.register(middlewareConfig)
+    let router = try VaporMonitoring.setupMonitoring(&config, &services)
+
+    var middlewares = MiddlewareConfig()
+    middlewares.use(ErrorMiddleware.self)
+    services.register(middlewares)
     
     try routes(router)
     services.register(router, as: Router.self)

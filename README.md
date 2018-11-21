@@ -4,12 +4,12 @@
 
 ##
 
-`VaporMonitoring` is a Vapor 3 package for monitoring and providing metrics for your Vapor application. Built on top op [SwiftMetrics](https://github.com/RuntimeTools/SwiftMetrics). Vapor Monitoring provides the default SwiftMetrics metrics along with request specific metrics. Metrics can be viewed using the provided dashboard or using Prometheus. 
+`VaporMonitoring` is a Vapor 3 package for monitoring and providing metrics for your Vapor application. Built on top op [SwiftMetrics](https://github.com/RuntimeTools/SwiftMetrics). Vapor Monitoring provides the default SwiftMetrics metrics along with request specific metrics. Metrics are exposed using Prometheus. 
 
 ## Installation
 Vapor Monitoring can be installed using SPM
 ```swift
-.package(url: "https://github.com/vapor-community/VaporMonitoring.git", from: "1.0.0")
+.package(url: "https://github.com/vapor-community/VaporMonitoring.git", from: "2.0.0")
 ```
 
 ## Usage
@@ -19,27 +19,18 @@ Vapor Monitoring requires a few things to work correclty, a `MonitoredRouter` an
 
 To set up your monitoring, in your `Configure.swift` file, add the following: 
 ```swift
-// If you don't use middleware use this:
 let router = try VaporMonitoring.setupMonitoring(&config, &services)
 services.register(router, as: Router.self)
-
-// If you use middleware use the following instead:
-let middlewareConfig = MiddlewareConfig()
-let router = try VaporMonitoring.setupMonitoring(&config, &services, &middlewareConfig)
-
-services.register(router, as: Router.self)
-// Add your own middleware here
-services.register(middlewareConfig)
 ```
 
 What this does is load VaporMonitoring with the default configuration. This includes adding all required services to your apps services & setting some configuration prefferences to use the `MonitoredResponder` and `MonitoredRouter`.
 
-By default, your dashboard will be served at `host:port/metrics` and your prometheus metrics will be served at `host:port/prometheus-metrics`. You can however customize this, as well as turning the dashboard/prometheus dashboard on or off. This also creates a HTTPServer running a WebSocketServer to power the dashboard.
+By default, your prometheus metrics will be served at `host:port/metrics`. You can however customize this.
 
 To customize your monitoring, add this to `Configure.swift`
 ```swift
-let monitoringConfg = MonitoringConfig(dashboard: false, prometheus: true, dashboardRoute: "", prometheusRoute: "customRoute")
+let monitoringConfg = MonitoringConfig(prometheusRoute: "customRoute")
 let router = try VaporMonitoring.setupMonitoring(&config, &services, monitoringConfg)
 services.register(router, as: Router.self)
 ```
-In this case, you'd have your prometheus metrics at `host:port/customRoute` and no dashboard would be provided.
+In this case, you'd have your prometheus metrics at `host:port/customRoute`.
