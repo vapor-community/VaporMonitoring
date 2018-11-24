@@ -4,7 +4,7 @@
 
 ##
 
-`VaporMonitoring` is a Vapor 3 package for monitoring and providing metrics for your Vapor application. Built on top op [SwiftMetrics](https://github.com/RuntimeTools/SwiftMetrics). Vapor Monitoring provides the default SwiftMetrics metrics along with request specific metrics. Metrics are exposed using Prometheus. 
+`VaporMonitoring` is a Vapor 3 package for monitoring and providing metrics for your Vapor application. Built on top op [SwiftMetrics](https://github.com/RuntimeTools/SwiftMetrics) and [SwiftPrometheus](https://github.com/MrLotU/SwiftPrometheus). Vapor Monitoring provides the default SwiftMetrics metrics along with request specific metrics. Metrics are exposed using Prometheus. 
 
 ## Installation
 Vapor Monitoring can be installed using SPM
