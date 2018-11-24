@@ -11,14 +11,14 @@ import Vapor
 /// Provides configuration for VaporMonitoring
 public struct MonitoringConfig {
     /// At what route to host the Prometheus data
-    var prometheusRoute: String
+    var prometheusRoute: [String]
     
-    public init(prometheusRoute: String) {
+    public init(prometheusRoute: String...) {
         self.prometheusRoute = prometheusRoute
     }
     
     public static func `default`() -> MonitoringConfig {
-        return .init(prometheusRoute: "/status")
+        return .init(prometheusRoute: "metrics")
     }
 }
 

@@ -76,18 +76,21 @@ public class VaporMetricsPrometheus: Service {
     
     let p_quantiles: [Double] = [0.5,0.9,0.99]
     
-    public init(metrics: SwiftMetrics, router: Router, route: String) throws {
+    public init(metrics: SwiftMetrics, router: Router, route: [String]) throws {
         self.metrics = metrics
         self.monitor = metrics.monitor()
         
         monitor.on(cpuEvent)
         monitor.on(memEvent)
         monitor.on(httpEvent)
-        
-        router.get(route, use: self.getPrometheusData)
+
+        // TBH, I feel like this should be possible in a nicer way
+        // But route.convertToPathComponents() gives all kinds of errors :L
+        router.get(route.map { $0 }, use: self.getPrometheusData)
     }
     
     func getPrometheusData(_ req: Request) throws -> String {
         return Prometheus.shared.getMetrics()
     }
 }
+
