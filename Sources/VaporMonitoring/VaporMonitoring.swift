@@ -22,7 +22,7 @@ public struct MonitoringConfig {
     }
     
     public static func `default`() -> MonitoringConfig {
-        return .init(prometheusRoute: "metrics", onlyBuiltinRoutes: true)
+        return .init(prometheusRoute: "metrics", onlyBuiltinRoutes: false)
     }
 }
 
