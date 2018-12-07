@@ -29,7 +29,7 @@ public final class MonitoredResponder: Responder, ServiceType {
             queue.sync {
                 for (index, r) in requestsLog.enumerated() {
                     if req == r.request {
-                        self.metrics.emitData(RequestData(timestamp: Int(r.timestamp), url: r.request.http.urlString, requestDuration: timeIntervalSince1970MilliSeconds - r.timestamp, statusCode: res.http.status.code, method: r.request.http.method))
+                        self.metrics.emitData(RequestData(timestamp: Int(r.timestamp), url: r.route, requestDuration: timeIntervalSince1970MilliSeconds - r.timestamp, statusCode: res.http.status.code, method: r.request.http.method))
                         requestsLog.remove(at: index)
                         break
                     }

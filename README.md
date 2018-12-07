@@ -25,11 +25,11 @@ services.register(router, as: Router.self)
 
 What this does is load VaporMonitoring with the default configuration. This includes adding all required services to your apps services & setting some configuration prefferences to use the `MonitoredResponder` and `MonitoredRouter`.
 
-By default, your prometheus metrics will be served at `host:port/metrics`. You can however customize this.
+By default, your prometheus metrics will be served at `host:port/metrics` and routes that don't have a routing closure, will be ignored to avoid exploding your prometheus logs. You can however customize this.
 
 To customize your monitoring, add this to `Configure.swift`
 ```swift
-let monitoringConfg = MonitoringConfig(prometheusRoute: "customRoute")
+let monitoringConfg = MonitoringConfig(prometheusRoute: "customRoute", onlyBuiltinRoutes: false)
 let router = try VaporMonitoring.setupMonitoring(&config, &services, monitoringConfg)
 services.register(router, as: Router.self)
 ```

@@ -13,12 +13,16 @@ public struct MonitoringConfig {
     /// At what route to host the Prometheus data
     var prometheusRoute: [String]
     
-    public init(prometheusRoute: String...) {
+    /// Only display response times for builtin routes
+    var onlyBuiltinRoutes: Bool
+    
+    public init(prometheusRoute: String..., onlyBuiltinRoutes: Bool) {
         self.prometheusRoute = prometheusRoute
+        self.onlyBuiltinRoutes = onlyBuiltinRoutes
     }
     
     public static func `default`() -> MonitoringConfig {
-        return .init(prometheusRoute: "metrics")
+        return .init(prometheusRoute: "metrics", onlyBuiltinRoutes: true)
     }
 }
 
@@ -33,7 +37,7 @@ public final class VaporMonitoring {
         let metrics = try SwiftMetrics()
         services.register(metrics)
         
-        let router = try MonitoredRouter()
+        let router = try MonitoredRouter(onlyBuiltinRoutes: monitorConfig.onlyBuiltinRoutes)
         config.prefer(MonitoredRouter.self, for: Router.self)
         
         let prometheus = try VaporMetricsPrometheus(metrics: metrics, router: router, route: monitorConfig.prometheusRoute)
@@ -56,6 +60,7 @@ public struct RequestData: SMData {
 internal struct RequestLog {
     var request: Request
     var timestamp: Double
+    var route: String
 }
 
 /// Log of requests
