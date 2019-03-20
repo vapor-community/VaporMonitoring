@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "VaporMonitoring", targets: ["VaporMonitoring"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "3.0.5"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "3.1.0"),
         .package(url: "https://github.com/RuntimeTools/SwiftMetrics.git", from: "2.3.0"),
         .package(url: "https://github.com/MrLotU/SwiftPrometheus.git", from: "0.2.0")
     ],

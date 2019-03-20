@@ -9,16 +9,18 @@ import Vapor
 import SwiftMetrics
 import Prometheus
 
-let osCPUUsed = Prometheus.shared.createGauge(forType: Float.self, named: "os_cpu_used_ratio", helpText: "The ratio of the systems CPU that is currently used (values are 0-1)")
-let processCPUUsed = Prometheus.shared.createGauge(forType: Float.self, named: "process_cpu_used_ratio", helpText: "The ratio of the process CPU that is currently used (values are 0-1)")
+let vaporMonitoringPromClient = PrometheusClient()
 
-let osResidentBytes = Prometheus.shared.createGauge(forType: Int.self, named: "os_resident_memory_bytes", helpText: "OS memory size in bytes.")
-let processResidentBytes = Prometheus.shared.createGauge(forType: Int.self, named: "process_resident_memory_bytes", helpText: "Resident memory size in bytes.")
-let processVirtualBytes = Prometheus.shared.createGauge(forType: Int.self, named: "process_virtual_memory_bytes", helpText: "Virtual memory size in bytes.")
+let osCPUUsed = vaporMonitoringPromClient.createGauge(forType: Float.self, named: "os_cpu_used_ratio", helpText: "The ratio of the systems CPU that is currently used (values are 0-1)")
+let processCPUUsed = vaporMonitoringPromClient.createGauge(forType: Float.self, named: "process_cpu_used_ratio", helpText: "The ratio of the process CPU that is currently used (values are 0-1)")
 
-let requestsTotal = Prometheus.shared.createCounter(forType: Int.self, named: "http_requests_total", helpText: "Total number of HTTP requests made.", withLabelType: TotalRequestsLabels.self)
+let osResidentBytes = vaporMonitoringPromClient.createGauge(forType: Int.self, named: "os_resident_memory_bytes", helpText: "OS memory size in bytes.")
+let processResidentBytes = vaporMonitoringPromClient.createGauge(forType: Int.self, named: "process_resident_memory_bytes", helpText: "Resident memory size in bytes.")
+let processVirtualBytes = vaporMonitoringPromClient.createGauge(forType: Int.self, named: "process_virtual_memory_bytes", helpText: "Virtual memory size in bytes.")
 
-let requestDuration = Prometheus.shared.createSummary(forType: Double.self, named: "http_request_duration_microseconds", helpText: "The HTTP request latencies in microseconds.", labels: RequestDurationLabels.self)
+let requestsTotal = vaporMonitoringPromClient.createCounter(forType: Int.self, named: "http_requests_total", helpText: "Total number of HTTP requests made.", withLabelType: TotalRequestsLabels.self)
+
+let requestDuration = vaporMonitoringPromClient.createSummary(forType: Double.self, named: "http_request_duration_microseconds", helpText: "The HTTP request latencies in microseconds.", labels: RequestDurationLabels.self)
 
 
 func cpuEvent(cpu: CPUData) {
@@ -89,8 +91,11 @@ public class VaporMetricsPrometheus: Service {
         router.get(route.map { $0 }, use: self.getPrometheusData)
     }
     
-    func getPrometheusData(_ req: Request) throws -> String {
-        return Prometheus.shared.getMetrics()
+    func getPrometheusData(_ req: Request) throws -> Future<String> {
+        let promise = req.eventLoop.newPromise(String.self)
+        vaporMonitoringPromClient.getMetrics {
+            promise.succeed(result: $0)
+        }
+        return promise.futureResult
     }
 }
-
