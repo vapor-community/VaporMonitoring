@@ -1,6 +1,5 @@
 import Vapor
 import VaporMonitoring
-import SwiftMetrics
 
 public func routes(_ router: Router) throws {
     // Basic "Hello, world!" example
@@ -11,16 +10,16 @@ public func routes(_ router: Router) throws {
 
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
-    /// Register routes to the router
-    
-    let mConfig = MonitoringConfig(prometheusRoute: "metrics", onlyBuiltinRoutes: true)
-    let router = try VaporMonitoring.setupMonitoring(&config, &services, mConfig)
-
+    services.register(MetricsMiddleware(), as: MetricsMiddleware.self)
     var middlewares = MiddlewareConfig()
+    middlewares.use(MetricsMiddleware.self)
     middlewares.use(ErrorMiddleware.self)
     services.register(middlewares)
-    
+
+    let router = EngineRouter.default()
     try routes(router)
+    let prometheusService = VaporPrometheus(router: router, route: "metrics")
+    services.register(prometheusService)
     services.register(router, as: Router.self)
 }
 
