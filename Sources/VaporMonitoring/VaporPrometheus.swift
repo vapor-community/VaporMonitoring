@@ -22,7 +22,7 @@ public class VaporPrometheus: Service {
     func getPrometheusData(_ req: Request) throws -> Future<String> {
         // The underlying API here should update to return a Future we can just return directly.
         let promise = req.eventLoop.newPromise(String.self)
-        promise.succeed(result: prometheusClient.collect())
+        prometheusClient.collect(into: promise)
         return promise.futureResult
     }
 }
