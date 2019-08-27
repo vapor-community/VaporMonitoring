@@ -12,8 +12,9 @@ import Prometheus
 /// Class providing Prometheus data
 public class VaporPrometheus: Service {
     let prometheusClient = PrometheusClient()
-    
-    public init(router: Router, route: String = "metrics") {
+
+    public init(router: Router, services: inout Services, route: String = "metrics") {
+        services.register(prometheusClient, as: PrometheusClient.self)
         Metrics.MetricsSystem.bootstrap(prometheusClient)
         router.get(route, use: self.getPrometheusData)
     }
@@ -25,3 +26,5 @@ public class VaporPrometheus: Service {
         return promise.futureResult
     }
 }
+
+extension PrometheusClient: Service { }
