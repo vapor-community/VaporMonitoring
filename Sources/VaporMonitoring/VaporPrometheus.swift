@@ -12,10 +12,8 @@ import Prometheus
 /// Class providing Prometheus data
 public class VaporPrometheus: Service {
     let prometheusClient = PrometheusClient()
-
-    let p_quantiles: [Double] = [0.5,0.9,0.99]
     
-    public init(router: Router, route: String) {
+    public init(router: Router, route: String = "metrics") {
         Metrics.MetricsSystem.bootstrap(prometheusClient)
         router.get(route, use: self.getPrometheusData)
     }
