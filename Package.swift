@@ -10,7 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-metrics.git", from: "1.0.0"),
-        .package(url: "https://github.com/MrLotU/SwiftPrometheus.git", .exact("0.0.0-alpha.1")),
+        .package(url: "https://github.com/MrLotU/SwiftPrometheus.git", from: "0.4.0-alpha.1"),
         .package(url: "https://github.com/vapor/vapor.git", from: "3.1.0"),
     ],
     targets: [
