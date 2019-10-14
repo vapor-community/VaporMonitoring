@@ -1,16 +1,11 @@
-//
-//  MetricsMiddleware.swift
-//  VaporMonitoring
-//
-//  Created by Joe Smith on 07/15/2019.
-//
-
 import Metrics
 import Vapor
 
 /// Middleware to track in per-request metrics
 ///
-/// Based [off the RED Method](https://www.weave.works/blog/the-red-method-key-metrics-for-microservices-architecture/)
+/// This middleware is "backend-agnostic" and can be used with any `swift-metrics`-compatible
+/// implementation. It is based
+/// [off the RED Method](https://www.weave.works/blog/the-red-method-key-metrics-for-microservices-architecture/)
 public final class MetricsMiddleware {
     let requestsCounterLabel = "http_requests_total"
     let requestsTimerLabel = "http_requests_duration_seconds"
@@ -19,6 +14,8 @@ public final class MetricsMiddleware {
     public init() { }
 }
 
+// We track the start time of each request, then when it comes "back out" and toward the client
+// we can specify the total duration of the request.
 extension MetricsMiddleware: Middleware {
     public func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
         let start = Date().timeIntervalSince1970

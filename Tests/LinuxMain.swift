@@ -3,6 +3,6 @@ import XCTest
 import VaporMonitoringTests
 
 var tests = [XCTestCaseEntry]()
-tests += VaporMonitoringsTests.__allTests()
+tests += VaporMonitoringTests.__allTests()
 
 XCTMain(tests)

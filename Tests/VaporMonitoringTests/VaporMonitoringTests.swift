@@ -32,7 +32,7 @@ final class VaporMonitoringTests: XCTestCase {
         let response = try middleware.respond(to: request, chainingTo: responder)
         do {
             _ = try response.wait()
-        } catch is TestError { /* expected */ }
+        } catch is TestError { /* expected for requests to ID 9001 */ }
     }
 
     func testVaporMonitoring() throws {
@@ -57,7 +57,6 @@ final class VaporMonitoringTests: XCTestCase {
         for _ in 1...5 {
             try makeRequest("http://fake-blog.com", middleware: middleware, container: testContainer)
         }
-
         for postID in [1, 1, 1, 1, 2, 3, 4, 5, 9001, 9001] {
             try makeRequest("http://fake-blog.com/posts/\(postID)", middleware: middleware, container: testContainer)
         }
