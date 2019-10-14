@@ -12,32 +12,48 @@ import Vapor
 ///
 /// Based [off the RED Method](https://www.weave.works/blog/the-red-method-key-metrics-for-microservices-architecture/)
 public final class MetricsMiddleware {
-    public let requestsCounterLabel = "http_requests_total"
-    public let requestsTimerLabel = "http_requests_duration_seconds"
-    // private let requestErrorsCounter = Metrics.Counter(label: "http_request_errors_total", dimensions: [(String, String)]()) NEED TO ADD ERRORS
+    let requestsCounterLabel = "http_requests_total"
+    let requestsTimerLabel = "http_requests_duration_seconds"
+    let requestErrorsLabel = "http_request_errors_total"
 
     public init() { }
 }
 
 extension MetricsMiddleware: Middleware {
     public func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
-        let start = Date()
+        let start = Date().timeIntervalSince1970
         let response: Future<Response>
         do {
             response = try next.respond(to: request)
         } catch {
             response = request.eventLoop.newFailedFuture(error: error)
         }
-        return response.map { response in
-            let dimensions = [
-                ("method", request.http.method.string),
-                ("path", request.http.url.path),
-                ("status_code", "\(response.http.status.code)")]
-            Metrics.Counter(label: self.requestsCounterLabel, dimensions: dimensions).increment()
-            let duration = start.timeIntervalSinceNow * -1
-            Metrics.Timer(label: self.requestsTimerLabel, dimensions: dimensions).record(duration)
-            return response
-        } // should we also handle the failed future too?
+
+        _ = response.map { response in
+            self.updateMetrics(for: request, responseCounterName: self.requestsCounterLabel, start: start, statusCode: response.http.status.code)
+        }.mapIfError { error in
+            self.updateMetrics(for: request, responseCounterName: self.requestErrorsLabel, start: start)
+        }
+
+        return response
+    }
+
+    private func updateMetrics(for request: Request, responseCounterName: String, start: Double, statusCode: UInt? = nil) {
+        let topLevel = String(request.http.url.path.split(separator: "/").first ?? "/")
+        var counterDimensions = [
+            ("method", request.http.method.string),
+            ("path", topLevel)]
+        if let statusCode = statusCode {
+            counterDimensions.append(("status_code", "\(statusCode)"))
+        }
+        let timerDimensions = [
+            ("method", request.http.method.string),
+            ("path", topLevel)]
+        let end = Date().timeIntervalSince1970
+        let duration = end - start
+
+        Metrics.Counter(label: responseCounterName, dimensions: counterDimensions).increment()
+        Metrics.Timer(label: self.requestsTimerLabel, dimensions: timerDimensions, preferredDisplayUnit: .seconds).recordSeconds(duration)
     }
 }
 
